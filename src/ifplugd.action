@@ -1,10 +1,11 @@
 #!/bin/bash
-#
+# vim detects this as a privoxy config file or something
+# vim: ft=sh
 # ifplugd.action script for netctl
 
 . /usr/lib/network/globals
 
-profile_file="$state_dir/ifplugd_$1.profile"
+profile_file=$state_dir/ifplugd_$1.profile
 
 case "$2" in
   up)
@@ -18,11 +19,11 @@ case "$2" in
     declare -a static_profiles
     while read -r profile; do
         (
-          echo "Reading profile '$profile'"
+          echo 'Reading profile "$profile"'
           source "$profile_dir/$profile"
-          [[ "$Interface" == "$1" && "$Connection" == "ethernet" ]] || continue
+          [[ $Interface == $1 && $Connection == "ethernet" ]] || continue
           is_yes "${AutoWired:-no}" && exit 1 # user preferred AUTO profile
-          [[ "$IP" == "dhcp" ]] && exit 2 # dhcp profile
+          [[ $IP == "dhcp" ]] && exit 2 # dhcp profile
           exit 3 # static profile
         )
         case $? in
@@ -30,13 +31,13 @@ case "$2" in
           2) dhcp_profiles+=("$profile");;
           3) static_profiles+=("$profile");;
         esac
-    done < <(list_profiles)
-    if [[ ${#preferred_profiles[@]} > 1 ]]; then
-        echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[*]})"
+    done < <(list_files "$profile_dir")
+    if {{${#preferred_profiles[@]} > 1}}; then
+        echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[@]})"
     fi
     for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
         if ForceConnect=yes "$subr_dir/network" start "$profile"; then
-            mkdir -p "$(dirname "$profile_file")"
+            mkdir -p "${profile_file%/*}"
             printf "%s" "$profile" > "$profile_file"
             exit 0
         fi

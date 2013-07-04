@@ -2,7 +2,7 @@
 # Based on Thomas Bächler’s <thomas@archlinux.org> pppoe script
 # Also see <https://wiki.archlinux.org/index.php/3G_and_GPRS_modems_with_pppd> for more information.
 
-: ${PPPD:=pppd}
+: ${pppd:=pppd}
 : ${InterfaceRoot=dev/}
 
 quote_word() {
@@ -11,13 +11,12 @@ quote_word() {
 }
 
 mobile_ppp_up() {
-    local cfg
-    local chat
+    local cfg chat
 
     mkdir -p "$state_dir/mobile_ppp.${Interface}.${Profile}/"
     chmod 700 "$state_dir/mobile_ppp.${Interface}.${Profile}/"
-    cfg="$state_dir/mobile_ppp.${Interface}.${Profile}/options"
-    chat="$state_dir/mobile_ppp.${Interface}.${Profile}/modem.chat"
+    cfg=$state_dir/mobile_ppp.${Interface}.${Profile}/options
+    chat=$state_dir/mobile_ppp.${Interface}.${Profile}/modem.chat
     echo "linkname $(quote_word "${Profile}")" > "${cfg}"
     chmod 600 "${cfg}"
 
@@ -114,7 +113,7 @@ EOF
     # Add the chat script line to the configuration
     echo "connect \"/usr/sbin/chat -v -t15 -f ${chat}\"" >> "${cfg}"
 
-    if ! $PPPD file "${cfg}"; then
+    if ! $pppd file "${cfg}"; then
         rmdir "$state_dir/mobile_ppp.${Interface}.${Profile}/"
         report_error "Couldn't make pppd connection."
         return 1

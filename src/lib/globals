@@ -1,9 +1,9 @@
-netctl_version="notpackaged"
-profile_dir="/etc/netctl"
-subr_dir="/usr/lib/network"
-conn_dir="$subr_dir/connections"
-state_dir="/run/network"
-state_file="${netctl_state_file:-/var/lib/netctl/netctl.state}"
+netctl_version=notpackaged
+profile_dir=/etc/netctl
+subr_dir=/usr/lib/network
+conn_dir=$subr_dir/connections
+state_dir=/run/network
+state_file=${netctl_state_file:-/var/lib/netctl/netctl.state}
 
 
 ### Logging/Error reporting
@@ -89,10 +89,13 @@ timeout_wait() {
 ### Profile management
 
 ## List all acceptable profiles names (assume they don't contain newlines)
-list_profiles() {
+list_files() {
     # JP: follow aliases with -L, also skip profiles that end with '.conf' (so
     #     profile.conf can be the wpa.conf file for profile)
-    find -L "$profile_dir/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
+    dir=${1-.}
+    find -L "$dir/" -maxdepth 1 -type f \
+        ! -name '.*' ! -name '*~' ! -name '*.conf' \
+        ! -name '*.service' -printf "%f\n"
 }
 
 ## Sources all hooks, a profile and any interface hook
@@ -104,7 +107,7 @@ load_profile() {
     fi
     while read -r hook; do
         source "$hook"
-    done < <(find -L "$profile_dir/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' | sort -u)
+    done < <(list_files "$profile_dir/hooks" | sort -u)
     source "$profile_dir/$1"
     if [[ -z $Interface ]]; then
         exit_error 'Profile "$1" does not specify an interface'
@@ -112,7 +115,7 @@ load_profile() {
     if [[ ! -r ${Connection:+$conn_dir/$connection} ]]; then
         exit_error 'Profile "$1" does not specify a valid connection'
     fi
-    if [[ -x "$profile_dir/interfaces/$interface" ]]; then
+    if [[ -x $profile_dir/interfaces/$interface ]]; then
         source "$profile_dir/interfaces/$interface"
     fi
     source "$conn_dir/$connection"

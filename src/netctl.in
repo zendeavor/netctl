@@ -44,7 +44,7 @@ sd_call() {
 
 list() {
     local indicators=( '*' ' ' )
-    list_profiles | while read -r Profile; do
+    list_files "$profile_dir" | while read -r Profile; do
         sd_call "is-active --quiet" "$Profile" &> /dev/null
         # Make the return value boolean
         printf '%s %s\n' "${indicators[!! $?]}" "$Profile"
@@ -53,7 +53,7 @@ list() {
 
 store() {
     mkdir -p "$(dirname "$state_file")"
-    list_profiles | while read -r Profile; do
+    list_files "$profile_dir" | while read -r Profile; do
         if sd_call "is-active --quiet" "$Profile" &> /dev/null; then
             printf "%s\n" "$Profile"
         fi
@@ -73,7 +73,7 @@ restore() {
 
 stop_all() {
     # We cannot pipe to mapfile, as the end of a pipe is inside a subshell
-    mapfile -t Profiles < <(list_profiles)
+    mapfile -t Profiles < <(list_files "$profile_dir")
     [[ $Profiles ]] && do_debug sd_call stop "${Profiles[@]}" 2> \
       >(grep -Fv "not loaded" >&2)
 }
@@ -90,7 +90,7 @@ switch_to() {
     if [[ -z $InterfaceLine ]]; then
         exit_error "Profile '$1' does not specify an interface"
     fi
-    mapfile -t AllProfiles < <(list_profiles)
+    mapfile -t AllProfiles < <(list_files "$profile_dir")
     mapfile -t Profiles < <(grep -Fl "$InterfaceLine" "${AllProfiles[@]}")
     [[ $Profiles ]] && do_debug sd_call stop "${Profiles[@]}" 2> \
       >(grep -Fv "not loaded" >&2)
