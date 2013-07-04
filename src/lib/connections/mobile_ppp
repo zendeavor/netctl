@@ -14,10 +14,10 @@ mobile_ppp_up() {
     local cfg
     local chat
 
-    mkdir -p "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
-    chmod 700 "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
-    cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
-    chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
+    mkdir -p "$state_dir/mobile_ppp.${Interface}.${Profile}/"
+    chmod 700 "$state_dir/mobile_ppp.${Interface}.${Profile}/"
+    cfg="$state_dir/mobile_ppp.${Interface}.${Profile}/options"
+    chat="$state_dir/mobile_ppp.${Interface}.${Profile}/modem.chat"
     echo "linkname $(quote_word "${Profile}")" > "${cfg}"
     chmod 600 "${cfg}"
 
@@ -115,7 +115,7 @@ EOF
     echo "connect \"/usr/sbin/chat -v -t15 -f ${chat}\"" >> "${cfg}"
 
     if ! $PPPD file "${cfg}"; then
-        rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
+        rmdir "$state_dir/mobile_ppp.${Interface}.${Profile}/"
         report_error "Couldn't make pppd connection."
         return 1
     fi
@@ -123,8 +123,8 @@ EOF
 
 mobile_ppp_down() {
     local cfg chat pidfile pid
-    cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
-    chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
+    cfg="$state_dir/mobile_ppp.${Interface}.${Profile}/options"
+    chat="$state_dir/mobile_ppp.${Interface}.${Profile}/modem.chat"
     pidfile="/var/run/ppp-${Profile}.pid"
 
     if [[ -e $pidfile ]]; then
@@ -133,7 +133,7 @@ mobile_ppp_down() {
     fi
 
     rm "${cfg}" "${chat}"
-    rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
+    rmdir "$state_dir/mobile_ppp.${Interface}.${Profile}/"
 }
 
 

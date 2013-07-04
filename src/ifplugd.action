@@ -4,7 +4,7 @@
 
 . /usr/lib/network/globals
 
-PROFILE_FILE="$STATE_DIR/ifplugd_$1.profile"
+profile_file="$state_dir/ifplugd_$1.profile"
 
 case "$2" in
   up)
@@ -19,7 +19,7 @@ case "$2" in
     while read -r profile; do
         (
           echo "Reading profile '$profile'"
-          source "$PROFILE_DIR/$profile"
+          source "$profile_dir/$profile"
           [[ "$Interface" == "$1" && "$Connection" == "ethernet" ]] || continue
           is_yes "${AutoWired:-no}" && exit 1 # user preferred AUTO profile
           [[ "$IP" == "dhcp" ]] && exit 2 # dhcp profile
@@ -35,23 +35,23 @@ case "$2" in
         echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[*]})"
     fi
     for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
-        if ForceConnect=yes "$SUBR_DIR/network" start "$profile"; then
-            mkdir -p "$(dirname "$PROFILE_FILE")"
-            printf "%s" "$profile" > "$PROFILE_FILE"
+        if ForceConnect=yes "$subr_dir/network" start "$profile"; then
+            mkdir -p "$(dirname "$profile_file")"
+            printf "%s" "$profile" > "$profile_file"
             exit 0
         fi
     done
   ;;
   down)
-    if [[ -e "$PROFILE_FILE" ]]; then
-        if ForceConnect=yes "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")"; then
-            rm -f "$PROFILE_FILE"
+    if [[ -e "$profile_file" ]]; then
+        if ForceConnect=yes "$subr_dir/network" stop "$(< "$profile_file")"; then
+            rm -f "$profile_file"
             exit 0
         fi
     fi
   ;;
   *)
-    echo "Wrong arguments" > /dev/stderr
+    echo "Wrong arguments" >&2
   ;;
 esac
 

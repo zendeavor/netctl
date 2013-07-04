@@ -1,11 +1,11 @@
 #! /bin/bash
 
 . /usr/lib/network/globals
-. "$SUBR_DIR/wpa"
-. "$SUBR_DIR/rfkill"
+. "$subr_dir/wpa"
+. "$subr_dir/rfkill"
 
 : ${ACTIOND:=wpa_actiond -p /run/wpa_supplicant}
-: ${ACTION_SCRIPT:=$SUBR_DIR/auto.action}
+: ${ACTION_SCRIPT:=$subr_dir/auto.action}
 
 if [[ $# != 2 || $1 != @(start|stop) ]]; then
     exit_error "Usage: netctl-auto [start|stop] <interface>"
@@ -13,7 +13,7 @@ fi
 
 STARTSTOP=$1
 INTERFACE=$2
-PIDFILE="$STATE_DIR/wpa_actiond_$INTERFACE.pid"
+PIDFILE="$state_dir/wpa_actiond_$INTERFACE.pid"
 shift 2
 
 case $STARTSTOP in
@@ -21,8 +21,8 @@ case $STARTSTOP in
     if wpa_is_active "$INTERFACE"; then
         exit_error "The interface ($INTERFACE) is already in use"
     fi
-    if [[ -x "$PROFILE_DIR/interfaces/$INTERFACE" ]]; then
-        source "$PROFILE_DIR/interfaces/$INTERFACE"
+    if [[ -x "$profile_dir/interfaces/$INTERFACE" ]]; then
+        source "$profile_dir/interfaces/$INTERFACE"
     fi
     if [[ $RFKill ]]; then
         enable_rf "$INTERFACE" "$RFKill" || exit 1
@@ -34,7 +34,7 @@ case $STARTSTOP in
     list_profiles | while read -r profile; do
         report_debug "Examining profile '$profile'"
         (
-          source "$PROFILE_DIR/$profile"
+          source "$profile_dir/$profile"
           [[ $Interface == "$INTERFACE" ]] || continue
           is_yes "${ExcludeAuto:-no}" && exit 1
           [[ $Connection != "wireless" ]] && exit 1
@@ -60,8 +60,8 @@ case $STARTSTOP in
   ;;
   stop)
     kill "$(< "$PIDFILE")"
-    if [[ -x "$PROFILE_DIR/interfaces/$INTERFACE" ]]; then
-        source "$PROFILE_DIR/interfaces/$INTERFACE"
+    if [[ -x "$profile_dir/interfaces/$INTERFACE" ]]; then
+        source "$profile_dir/interfaces/$INTERFACE"
     fi
     timeout_wait 1 '! wpa_is_active "$INTERFACE"' || wpa_stop "$INTERFACE"
     ip link set dev "$INTERFACE" down

@@ -19,9 +19,9 @@ pppoe_up() {
         return 1
     fi
 
-    mkdir -p "$STATE_DIR/pppoe.${Interface}.${Profile}/"
-    chmod 700 "$STATE_DIR/pppoe.${Interface}.${Profile}/"
-    cfg="$STATE_DIR/pppoe.${Interface}.${Profile}/options"
+    mkdir -p "$state_dir/pppoe.${Interface}.${Profile}/"
+    chmod 700 "$state_dir/pppoe.${Interface}.${Profile}/"
+    cfg="$state_dir/pppoe.${Interface}.${Profile}/options"
     echo "linkname $(quote_word "${Profile}")" > "${cfg}"
     chmod 600 "${cfg}"
 
@@ -56,7 +56,7 @@ pppoe_up() {
 
     if ! $PPPD file "${cfg}"; then
         rm "${cfg}"
-        rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
+        rmdir "$state_dir/pppoe.${Interface}.${Profile}/"
         report_error "Couldn't make pppd connection."
         return 1
     fi
@@ -64,7 +64,7 @@ pppoe_up() {
 
 pppoe_down() {
     local cfg pidfile pid
-    cfg="$STATE_DIR/pppoe.${Interface}.${Profile}/options"
+    cfg="$state_dir/pppoe.${Interface}.${Profile}/options"
     pidfile="/var/run/ppp-${Profile}.pid"
 
     if [[ -e $pidfile ]]; then
@@ -73,7 +73,7 @@ pppoe_down() {
     fi
 
     rm "${cfg}"
-    rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
+    rmdir "$state_dir/pppoe.${Interface}.${Profile}/"
 
     bring_interface_down "$Interface"
 }

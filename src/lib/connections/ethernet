@@ -1,6 +1,6 @@
 # Ethernet connection support for netctl
 
-. "$SUBR_DIR/ip"
+. "$subr_dir/ip"
 
 
 ethernet_up() {
@@ -30,7 +30,7 @@ ethernet_up() {
 
 
     if is_yes "${Auth8021X:-no}"; then
-        . "$SUBR_DIR/wpa"
+        . "$subr_dir/wpa"
         : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
         : ${WPADriver:=wired}
         : ${TimeoutWPA:=15}
@@ -65,7 +65,7 @@ ethernet_down() {
 # Stop wpa_supplicant if neccessary
 stop_8021x() {
     if is_yes "${Auth8021X:-no}"; then
-        . "$SUBR_DIR/wpa"
+        . "$subr_dir/wpa"
         : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
         do_debug wpa_stop "$Interface"
     fi

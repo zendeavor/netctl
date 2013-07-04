@@ -1,8 +1,8 @@
 # Contributed by: Thomas Bächler <thomas@archlinux.org>
 
-. "$SUBR_DIR/ip"
+. "$subr_dir/ip"
 
-: ${BRCTL:=brctl}
+: ${brctl:=brctl}
 declare -ag BindsToInterfaces
 
 bridge_up() {
@@ -12,17 +12,17 @@ bridge_up() {
             return 1
         fi
     else
-        $BRCTL addbr "$Interface"
+        $brctl addbr "$Interface"
     fi
 
     for member in "${BindsToInterfaces[@]}"; do
         ip link set "$member" promisc on up
         ip addr flush dev "$member"
-        $BRCTL addif "$Interface" "$member"
+        $brctl addif "$Interface" "$member"
     done
     # Set options
-    [[ "$FwdDelay" ]] && $BRCTL setfd "$Interface" "$FwdDelay"
-    [[ "$MaxAge" ]] && $BRCTL setmaxage "$Interface" "$MaxAge"
+    [[ "$FwdDelay" ]] && $brctl setfd "$Interface" "$FwdDelay"
+    [[ "$MaxAge" ]] && $brctl setmaxage "$Interface" "$MaxAge"
 
     bring_interface_up "$Interface"
     ip_set
@@ -31,12 +31,12 @@ bridge_up() {
 bridge_down() {
     for member in "${BindsToInterfaces[@]}"; do
         ip link set "$member" promisc off down
-        $BRCTL delif "$Interface" "$member"
+        $brctl delif "$Interface" "$member"
     done
 
     ip_unset
     bring_interface_down "$Interface"
-    $BRCTL delbr "$Interface"
+    $brctl delbr "$Interface"
 }
 
 

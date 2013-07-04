@@ -1,6 +1,6 @@
 # Contributed by: Thomas S Hatch <thatch45@gmail.com>
 
-. "$CONN_DIR/ethernet"
+. "$conn_dir/ethernet"
 
 vlan_up() {
     if [[ ${#BindsToInterfaces[@]} -ne 1 ]]; then

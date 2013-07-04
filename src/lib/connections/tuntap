@@ -1,6 +1,6 @@
 # Contributed by: Rémy Oudompheng <remy@archlinux.org>
 
-. "$SUBR_DIR/ip"
+. "$subr_dir/ip"
 
 declare -ag BindsToInterfaces
 
