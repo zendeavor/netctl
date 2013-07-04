@@ -1,6 +1,6 @@
 # Contributed by: Thomas Bächler <thomas@archlinux.org>
 
-: ${PPPD:=pppd}
+: ${pppd:=pppd}
 
 quote_word() {
     set -- "${@//\\/\\\\}"
@@ -54,7 +54,7 @@ pppoe_up() {
     [[ -n ${PPPoEMAC} ]] && echo "pppoe-mac $(quote_word "${PPPoEMAC}")" >> "${cfg}"
     [[ ${PPPoEIP6} == yes ]] && echo "+ipv6" >> "${cfg}"
 
-    if ! $PPPD file "${cfg}"; then
+    if ! $pppd file "${cfg}"; then
         rm "${cfg}"
         rmdir "$state_dir/pppoe.${Interface}.${Profile}/"
         report_error "Couldn't make pppd connection."
