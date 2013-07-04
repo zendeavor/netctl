@@ -1,10 +1,10 @@
 netctl_version=notpackaged
 profile_dir=/etc/netctl
+
 subr_dir=/usr/lib/network
 conn_dir=$subr_dir/connections
 state_dir=/run/network
 state_file=${netctl_state_file:-/var/lib/netctl/netctl.state}
-
 
 ### Logging/Error reporting
 
@@ -121,5 +121,16 @@ load_profile() {
     source "$conn_dir/$connection"
 }
 
+### DHCP Client selection
+
+## Test binaries and set dhcp client accordingly
+# $1: dhcp client
+which_dhcp() {
+    if type -P dhclient > /dev/null 2>&1; then
+        $1 = dhclient
+    else
+        $1 = dhcpcd
+    fi
+}
 
 # vim: ft=sh ts=4 et sw=4:
