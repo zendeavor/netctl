@@ -1,6 +1,6 @@
 # Contributed by: Kyle Fuller <inbox@kylefuller.co.uk>
 
-. "$SUBR_DIR/ip"
+. "$subr_dir/ip"
 
 declare -a BindsToInterfaces
 

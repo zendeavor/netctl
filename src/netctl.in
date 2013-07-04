@@ -52,21 +52,21 @@ list() {
 }
 
 store() {
-    mkdir -p "$(dirname "$STATE_FILE")"
+    mkdir -p "$(dirname "$state_file")"
     list_profiles | while read -r Profile; do
         if sd_call "is-active --quiet" "$Profile" &> /dev/null; then
             printf "%s\n" "$Profile"
         fi
-    done > "$STATE_FILE"
+    done > "$state_file"
 }
 
 restore() {
-    if [[ ! -r $STATE_FILE ]]; then
-        exit_error "Could not read state file '$STATE_FILE'"
-    elif [[ ! -s $STATE_FILE ]]; then
-        report_debug "No profiles to restore in state file '$STATE_FILE'"
+    if [[ ! -r $state_file ]]; then
+        exit_error "Could not read state file '$state_file'"
+    elif [[ ! -s $state_file ]]; then
+        report_debug "No profiles to restore in state file '$state_file'"
     else
-        mapfile -t Profiles < "$STATE_FILE"
+        mapfile -t Profiles < "$state_file"
         do_debug sd_call start "${Profiles[@]}"
     fi
 }
@@ -79,7 +79,7 @@ stop_all() {
 }
 
 switch_to() {
-    cd "$PROFILE_DIR"
+    cd "$profile_dir"
     if [[ ! -r $1 ]]; then
         exit_error "Profile '$1' does not exist or is not readable"
     fi
@@ -143,7 +143,7 @@ case $# in
   1)
     case $1 in
       --version)
-        report_notice "netctl version $NETCTL_VERSION";;
+        report_notice "netctl version $netctl_version";;
       --help)
         usage;;
       list)

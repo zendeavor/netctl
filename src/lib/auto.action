@@ -1,7 +1,7 @@
 #! /bin/bash
 
 . /usr/lib/network/globals
-. "$SUBR_DIR/ip"
+. "$subr_dir/ip"
 
 interface="$1"
 ssid="$2"
@@ -14,8 +14,8 @@ action="$4"
 case $action in
   CONNECT)
     if [[ -z $profile ]]; then
-        if [[ -x "$PROFILE_DIR/interfaces/$interface" ]]; then
-            source "$PROFILE_DIR/interfaces/$interface"
+        if [[ -x "$profile_dir/interfaces/$interface" ]]; then
+            source "$profile_dir/interfaces/$interface"
         fi
         dhcpcd -qL -t "${TimeoutDHCP:-10}" $DhcpcdOptions -K "$interface"
         exit $?

@@ -1,27 +1,27 @@
-NETCTL_VERSION="notpackaged"
-PROFILE_DIR="/etc/netctl"
-SUBR_DIR="/usr/lib/network"
-CONN_DIR="$SUBR_DIR/connections"
-STATE_DIR="/run/network"
-STATE_FILE="${NETCTL_STATE_FILE:-/var/lib/netctl/netctl.state}"
+netctl_version="notpackaged"
+profile_dir="/etc/netctl"
+subr_dir="/usr/lib/network"
+conn_dir="$subr_dir/connections"
+state_dir="/run/network"
+state_file="${netctl_state_file:-/var/lib/netctl/netctl.state}"
 
 
 ### Logging/Error reporting
 
 report_notice() {
-    echo "$*"
+    printf %s\\n "$@"
 }
 
 report_error() {
-    echo "$*"
-}
+    printf %s\\n "$@"
+} >&2
 
 report_debug() {
-    is_yes "${NETCTL_DEBUG:-no}" && echo "DEBUG: $*" >&2
-}
+    is_yes "${netctl_debug:-no}" && echo "DEBUG: $*"
+} >&2
 
 exit_error() {
-    report_error "$@" >&2
+    report_error "$@"
     exit 1
 }
 
@@ -35,7 +35,7 @@ in_array() {
     local hay needle=$1
     shift
     for hay; do
-        [[ $hay == "$needle" ]] && return 0
+        [[ $hay == $needle ]] && return 0
     done
     return 1
 }
@@ -51,7 +51,7 @@ is_yes() {
         return 1
       ;;
       *)
-        report_error "Not a valid truth value: '$1'"
+        report_error 'Not a valid truth value: "$1"'
         return 2
       ;;
     esac
@@ -79,11 +79,10 @@ timeout_wait() {
     local timeout=$1
     (( timeout *= 5 ))
     shift
-    until eval "$*"; do
+    until "$@"; do
         (( timeout-- > 0 )) || return 1
         sleep 0.2
     done
-    return 0
 }
 
 
@@ -93,30 +92,30 @@ timeout_wait() {
 list_profiles() {
     # JP: follow aliases with -L, also skip profiles that end with '.conf' (so
     #     profile.conf can be the wpa.conf file for profile)
-    find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
+    find -L "$profile_dir/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
 }
 
 ## Sources all hooks, a profile and any interface hook
 # $1: profile name
 load_profile() {
     local hook
-    if [[ ! -r "$PROFILE_DIR/$1" ]]; then
-        exit_error "Profile '$1' does not exist or is not readable"
+    if [[ ! -r $profile_dir/$1 ]]; then
+        exit_error 'Profile "$1" does not exist or is not readable'
     fi
     while read -r hook; do
         source "$hook"
-    done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' | sort -u)
-    source "$PROFILE_DIR/$1"
+    done < <(find -L "$profile_dir/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' | sort -u)
+    source "$profile_dir/$1"
     if [[ -z $Interface ]]; then
-        exit_error "Profile '$1' does not specify an interface"
+        exit_error 'Profile "$1" does not specify an interface'
     fi
-    if [[ ! -r "${Connection:+$CONN_DIR/$Connection}" ]]; then
-        exit_error "Profile '$1' does not specify a valid connection"
+    if [[ ! -r ${Connection:+$conn_dir/$connection} ]]; then
+        exit_error 'Profile "$1" does not specify a valid connection'
     fi
-    if [[ -x "$PROFILE_DIR/interfaces/$Interface" ]]; then
-        source "$PROFILE_DIR/interfaces/$Interface"
+    if [[ -x "$profile_dir/interfaces/$interface" ]]; then
+        source "$profile_dir/interfaces/$interface"
     fi
-    source "$CONN_DIR/$Connection"
+    source "$conn_dir/$connection"
 }
 
 

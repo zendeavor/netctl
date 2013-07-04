@@ -81,7 +81,7 @@ wpa_start() {
     # Wait up to one second for the pid file to appear
     if ! timeout_wait 1 '[[ -f "$pidfile" ]]'; then
         # Remove the configuration file if it was generated
-        configuration="$STATE_DIR/wpa_supplicant_$interface.conf"
+        configuration="$state_dir/wpa_supplicant_$interface.conf"
         [[ -f $configuration && -O $configuration ]] && rm -f "$configuration"
         return 1
     fi
@@ -90,7 +90,7 @@ wpa_start() {
 ## Stop an instance of the wpa supplicant
 # $1: interface name
 wpa_stop() {
-    local interface=$1 config_file="$STATE_DIR/wpa_supplicant_$1.conf"
+    local interface=$1 config_file="$state_dir/wpa_supplicant_$1.conf"
     # We need this as long as wpa_cli has a different default than netctl
     if [[ -z $WPA_CTRL_DIR && -z $WPAConfigFile ]]; then
         WPA_CTRL_DIR="/run/wpa_supplicant"
@@ -170,13 +170,13 @@ wpa_quote() {
 ## Create a configuration file for wpa_supplicant without any network blocks
 # $1: interface name
 wpa_make_config_file() {
-    local config_file="$STATE_DIR/wpa_supplicant_$1.conf"
+    local config_file="$state_dir/wpa_supplicant_$1.conf"
 
     if [[ -e $config_file ]]; then
         report_debug "The anticipated filename '$config_file' is not available"
         return 1
     fi
-    mkdir -p "$STATE_DIR" /run/wpa_supplicant
+    mkdir -p "$state_dir" /run/wpa_supplicant
     if ! : > "$config_file"; then
         report_debug "Could not create the configuration file '$config_file'"
         return 1

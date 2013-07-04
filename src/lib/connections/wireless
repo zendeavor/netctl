@@ -1,8 +1,8 @@
 # Wireless connection support for netctl
 
-. "$SUBR_DIR/ip"
-. "$SUBR_DIR/wpa"
-. "$SUBR_DIR/rfkill"
+. "$subr_dir/ip"
+. "$subr_dir/wpa"
+. "$subr_dir/rfkill"
 
 
 wireless_up() {
