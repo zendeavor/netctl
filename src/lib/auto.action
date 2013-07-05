@@ -1,68 +1,57 @@
 #! /bin/bash
 
-if (( $# != 2 )) || [[ $1 != @(start|stop) ]]; then
-    exit_error "Usage: netctl-auto [start|stop] <interface>"
-fi
-
 . /usr/lib/network/globals
-. "$subr_dir/wpa"
-. "$subr_dir/rfkill"
+. "$subr_dir/ip"
 
-startstop=$1
-interface=$2
-pidfile="$state_dir/wpa_actiond_$interface.pid"
-shift 2
-action_script=$subr_dir/auto.action
-actiond_args=(-p /run/wpa_supplicant -i "$interface" -P "$pidfile" -a "$action_script")
+interface="$1"
+ssid="$2"
+profile="$3"
+action="$4"
 
-case $startstop in
-  start)
-    if wpa_is_active "$interface"; then
-        exit_error "The interface ($interface) is already in use"
-    fi
-    if [[ -x $profile_dir/interfaces/$interface ]]; then
-        source "$profile_dir/interfaces/$interface"
-    fi
-    if [[ $RFKill ]]; then
-        enable_rf "$interface" "$RFKill" || exit 1
+
+# Is it possible that we don't get a profile?!
+[[ "$profile" ]] && load_profile "$profile"
+
+case $action in
+  CONNECT)
+    if [[ -z $profile ]]; then
+        if [[ -x "$profile_dir/interfaces/$interface" ]]; then
+            source "$profile_dir/interfaces/$interface"
+        fi
+            if [ dhclient = "$(which_dhcp)" ]; then
+                dhclient -q -r "$DhclientOptions" "$interface"
+            else
+                dhcpcd -qL -t "${TimeoutDHCP:-10}" "$DhcpcdOptions" -K "$interface"
+            fi
+        exit $?
     fi
 
-    if ! wpa_conf=$(wpa_make_config_file "$interface"); then
-        exit_error 'Could not create the configuration file for interface "$INTERFACE"'
-    fi
-    list_files "$profile_dir" | while read -r profile; do
-        report_debug 'Examining profile "$profile"'
-        (
-          source "$profile_dir/$profile"
-          [[ $Interface == "$interface" ]] || continue
-          is_yes "${ExcludeAuto:-no}" && exit 1
-          [[ $Connection != "wireless" ]] && exit 1
-          : ${Security:=none}
-          # Exclude wpa-config, the wpa_conf is 'complete' and does not fit in this scheme
-          [[ $Security == "wpa-config" ]] && exit 1
+    DhcpcdOptions+=" -K"
+    DhclientOptions+=" -r"
 
-          printf "%s\n" "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$wpa_conf"
-          report_notice "Included profile '$profile'"
-        )
-    done
-
-    # Start the WPA supplicant
-    WPADriver=nl80211,wext
-    if wpa_start "$interface" "$WPADriver" "$wpa_conf"; then
-        wpa_actiond "${actiond_args[@]}" && exit
-        wpa_stop "$interface"
-    fi
-    exit 1
+    ip_set || exit 1
+    [[ $var ]] && bash -c "$ExecUpPost" || netctl-auto stop "$interface"
+    exit 1 
   ;;
-  stop)
-    kill "$(< "$pidfile")"
-    if [[ -x $profile_dir/interfaces/$interface ]]; then
-        source "$profile_dir/interfaces/$interface"
+  DISCONNECT)
+      if [[ -z "$profile" ]]; then
+        if [ dhclient = "$(which_dhcp)" ]; then
+            dhclient -x "$interface"
+        else
+            dhcpcd -k "$interface"
+        fi
+        exit $?
     fi
-    timeout_wait 1 '! wpa_is_active "$interface"' || wpa_stop "$interface"
-    ip link set dev "$interface" down
-    [[ $RFKill ]] && disable_rf "$interface" "$RFKill"
-    exit
+    [[ $var ]] && bash -c "$ExecDownPre" || exit 1
+    ip_unset
+  ;;
+  LOST|REESTABLISHED)
+    # Not handled.
+    exit 0
+  ;;
+  *)
+    # Everything else.
+    exit 1
   ;;
 esac
 
