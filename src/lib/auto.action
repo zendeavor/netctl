@@ -10,15 +10,15 @@ action="$4"
 
 
 # Is it possible that we don't get a profile?!
-[[ "$profile" ]] && load_profile "$profile"
+[[ $profile ]] && load_profile "$profile"
 
 case $action in
   CONNECT)
     if [[ -z $profile ]]; then
-        if [[ -x "$profile_dir/interfaces/$interface" ]]; then
-            source "$profile_dir/interfaces/$interface"
+        if [[ -x $profile_dir/interfaces/$interface ]]; then
+            source $profile_dir/interfaces/$interface
         fi
-            if [ dhclient = "$(which_dhcp)" ]; then
+            if [[ $which_dhcp = dhclient ]]; then
                 dhclient -q -r "$DhclientOptions" "$interface"
             else
                 dhcpcd -qL -t "${TimeoutDHCP:-10}" "$DhcpcdOptions" -K "$interface"
@@ -34,8 +34,8 @@ case $action in
     exit 1 
   ;;
   DISCONNECT)
-      if [[ -z "$profile" ]]; then
-        if [ dhclient = "$(which_dhcp)" ]; then
+      if [[ -z $profile ]]; then
+        if [[ $which_dhcp = dhclient ]]; then
             dhclient -x "$interface"
         else
             dhcpcd -k "$interface"
