@@ -6,6 +6,7 @@ conn_dir=$subr_dir/connections
 state_dir=/run/network
 state_file=${netctl_state_file:-/var/lib/netctl/netctl.state}
 
+
 ### Logging/Error reporting
 
 report_notice() {
@@ -121,6 +122,7 @@ load_profile() {
     source "$conn_dir/$connection"
 }
 
+
 ### DHCP Client selection
 
 ## Test binaries and set dhcp client accordingly
@@ -132,5 +134,6 @@ which_dhcp() {
         $1 = dhcpcd
     fi
 }
+
 
 # vim: ft=sh ts=4 et sw=4:
