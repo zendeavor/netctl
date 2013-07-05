@@ -111,10 +111,10 @@ load_profile() {
     done < <(list_files "$profile_dir/hooks" | sort -u)
     source "$profile_dir/$1"
     if [[ -z $Interface ]]; then
-        exit_error 'Profile "$1" does not specify an interface'
+        exit_error "Profile $1 does not specify an interface"
     fi
     if [[ ! -r ${Connection:+$conn_dir/$connection} ]]; then
-        exit_error 'Profile "$1" does not specify a valid connection'
+        exit_error "Profile $1 does not specify a valid connection"
     fi
     if [[ -x $profile_dir/interfaces/$interface ]]; then
         source "$profile_dir/interfaces/$interface"
@@ -128,11 +128,12 @@ load_profile() {
 ## Test binaries and set dhcp client accordingly
 # $1: dhcp client
 which_dhcp() {
-    if type -P dhclient > /dev/null 2>&1; then
+    if type -P dhclient &>/dev/null; then
         $1 = dhclient
     else
         $1 = dhcpcd
     fi
+    return $1
 }
 
 
