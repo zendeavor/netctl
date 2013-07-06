@@ -32,13 +32,13 @@ bring_interface_up() {
 bring_interface_down() {
     local interface=$1
     ip link set dev "$interface" down &>/dev/null
-    # We reuse the up timeout (down normally is faster)
+    # We reuse the up timeout (down is normally faster)
     timeout_wait "${TimeoutUp:-5}" ! interface_is_up "$interface"
 }
 
 
 if [[ $# -ne 2 || $1 != @(start|stop) ]]; then
-    exit_error "Usage: $0 {start|stop} <profile>"
+    report error "Usage: $0 {start|stop} <profile>"
 fi
 ensure_root netctl
 # Ensure we are not in a transient directory
@@ -49,42 +49,40 @@ Profile=$2
 load_profile "$Profile"
 case $1 in
   start)
-    report_notice "Starting network profile $Profile ..."
+    report notice "Starting network profile $Profile ..."
     if [[ is_interface $Interface && interface_is_up $Interface && \
-       ! is_yes ${ForceConnect:-no} ]]; then
-        report_error "The interface of network profile $Profile is already up"
+        ! is_yes ${ForceConnect:-no} ]]; then
+        report error "The interface of network profile $Profile is already up"
         exit 1
     fi
     if ! [[ ${Connection}_up ]]; then
-        report_error "Failed to bring the network up for profile $Profile"
+        report error "Failed to bring the network up for profile $Profile"
         exit 1
     fi
-    # JP: sandbox the eval
-    if [[ -z  $ExecUpPost ]]; then
-        report_error "ExecUpPost failed for network profile $Profile"
+    if "${ExecUpPost[@]}" &>/dev/null; then
+        report error "ExecUpPost failed for network profile $Profile"
         # Failing ExecUpPost will take the connection down
         "${Connection}_down"
         exit 1
     fi
-    report_notice "Started network profile $Profile"
+    report notice "Started network profile $Profile"
   ;;
   stop)
-    report_notice "Stopping network profile $Profile ..."
-    # JP: sandbox the eval
-    if [[ -z $ExecDownPre ]]; then
-        report_error "ExecDownPre failed for network profile $Profile"
+    report notice "Stopping network profile $Profile ..."
+    if ! "${ExecDownPre[@]}" &>/dev/null; then
+        report error "ExecDownPre failed for network profile $Profile"
         # Failing ExecDownPre will leave the profile active
         exit 1
     fi
     if ! [[ ${Connection}_down ]]; then
-        report_error "Failed to bring the network down for profile $Profile"
+        report error "Failed to bring the network down for profile $Profile"
         exit 1
     fi
     if [[ is_interface $Interface && interface_is_up $Interface && ! is_yes ${ForceConnect:-no} ]]; then
-        report_error "The interface of network profile $Profile did not go down"
+        report error "The interface of network profile $Profile did not go down"
         exit 1
     fi
-    report_notice "Stopped network profile $Profile"
+    report notice "Stopped network profile $Profile"
   ;;
 esac
 

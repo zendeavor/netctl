@@ -4,13 +4,12 @@
 . "$subr_dir/ip"
 
 interface="$1"
-ssid="$2"
+# ssid="$2"
 profile="$3"
 action="$4"
 
-
 # Is it possible that we don't get a profile?!
-[[ $profile ]] && load_profile "$profile"
+[[ $profile && load_profile "$profile" ]] || exit 1
 
 case "$action" in
     CONNECT)
@@ -30,7 +29,7 @@ case "$action" in
         DhclientOptions+=" -r"
 
         ip_set || exit 1
-        if  [[ -z $ExecUpPost ]]; then
+        if ! "${ExecUpPost[@]}" &>/dev/null; then
             # Failing ExecUpPost will take the connection down
             netctl-auto stop "$interface"
             exit 1
@@ -38,16 +37,14 @@ case "$action" in
         ;;
     DISCONNECT)
         if [[ -z $profile ]]; then
-            if [[ $which_dhcp = dhclient ]]; then
+            if "$which_dhcp" = dhclient; then
                 dhclient -x "$interface"
             else
                 dhcpcd -k "$interface"
             fi
             exit $?
         fi
-        if [[ -z $ExecDownPre ]]; then
-            exit 1
-        fi
+        "${ExecDownPre[@]}" &>/dev/null || exit 1
         ip_unset
         ;;
     LOST|REESTABLISHED)
