@@ -1,24 +1,30 @@
 #!/bin/bash
-#
+# vim detected this as privoxy config
+# vim: ft=sh
 # ifplugd.action script for netctl
 
 . /usr/lib/network/globals
 
-profile_file="$state_dir/ifplugd_$1.profile"
+profile_file=$state_dir/ifplugd_$1.profile
+# set exit_status if there was a problem
+exit_status=0
 
+# TODO: wrap this in a function?
 case "$2" in
   up)
     # Look for a dhcp based profile to try first
     # dhcp can actually outright fail, whereas
     # it's difficult to tell if static succeeded
     # Also check profile is same iface and is right connection
-    echo "up"
     declare -a preferred_profiles
     declare -a dhcp_profiles
     declare -a static_profiles
-    while read -r profile; do
+    # TODO: refactor this without subshells
+    # maybe mapfile, parse, choose profile
+    # admittedly complex, but also prevents code execution in profiles
+    while read -r -d '' profile; do
         (
-          echo "Reading profile '$profile'"
+          echo "Reading profile $profile"
           source "$profile_dir/$profile"
           [[ "$Interface" == "$1" && "$Connection" == "ethernet" ]] || continue
           is_yes "${AutoWired:-no}" && exit 1 # user preferred AUTO profile
@@ -26,33 +32,33 @@ case "$2" in
           exit 3 # static profile
         )
         case $? in
-          1) preferred_profiles+=("$profile");;
-          2) dhcp_profiles+=("$profile");;
-          3) static_profiles+=("$profile");;
+          1) preferred_profiles+=$profile;;
+          2) dhcp_profiles+=$profile;;
+          3) static_profiles+=$profile;;
         esac
-    done < <(list_profiles)
-    if [[ ${#preferred_profiles[@]} > 1 ]]; then
-        echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[*]})"
+    done < <(list_files)
+    if (( ${#preferred_profiles[@]} > 1 )); then
+        printf '%s\n' "AutoWired flag for $1 set in more than one profile (${preferred_profiles[@]})"
     fi
     for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
         if ForceConnect=yes "$subr_dir/network" start "$profile"; then
-            mkdir -p "$(dirname "$profile_file")"
-            printf "%s" "$profile" > "$profile_file"
-            exit 0
+            mkdir -p "${profile_file%/*}"
+            printf %s "$profile" > "$profile_file"
         fi
     done
   ;;
   down)
+    # TODO: $subr_dir/network should fail appropriately if no profile found
+    # we would prefer not testing for a file's existence
     if [[ -e "$profile_file" ]]; then
         if ForceConnect=yes "$subr_dir/network" stop "$(< "$profile_file")"; then
             rm -f "$profile_file"
-            exit 0
         fi
     fi
   ;;
   *)
-    echo "Wrong arguments" >&2
+    printf '%s\n' "Wrong arguments" >&2
   ;;
 esac
 
-exit 1
+exit $((exit_status))
