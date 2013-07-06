@@ -5,7 +5,7 @@
 
 ethernet_up() {
     if ! is_interface "$Interface"; then
-        report_error "Interface '$Interface' does not exist"
+        report error "Interface '$Interface' does not exist"
         return 1
     fi
 
@@ -15,14 +15,14 @@ ethernet_up() {
     fi
 
     if ! bring_interface_up "$Interface"; then
-        report_error "Failed to bring interface '$Interface' up"
+        report error "Failed to bring interface '$Interface' up"
         return 1
     fi
 
     if ! is_yes "${SkipNoCarrier:-no}"; then
         # Some cards are plain slow to come up. Don't fail immediately.
         if ! timeout_wait "${TimeoutCarrier:-5}" '(( $(< "/sys/class/net/$Interface/carrier") ))'; then
-            report_error "No connection on interface '$Interface'"
+            report error "No connection on interface '$Interface'"
             bring_interface_down "$Interface"
             return 1
         fi
@@ -36,7 +36,7 @@ ethernet_up() {
         : ${TimeoutWPA:=15}
 
         if ! wpa_start "$Interface" "$WPADriver" "$WPAConfigFile"; then
-            report_error "The WPA supplicant did not start for interface '$Interface'"
+            report error "The WPA supplicant did not start for interface '$Interface'"
             bring_interface_down "$Interface"
             return 1
         fi
@@ -44,7 +44,7 @@ ethernet_up() {
         if ! wpa_wait_until_state "$TimeoutWPA" "$Interface" "ASSOCIATED"; then
             wpa_stop "$Interface"
             bring_interface_down "$Interface"
-            report_error "WPA Authentication/Association Failed"
+            report error "WPA Authentication/Association Failed"
             return 1
         fi
     fi

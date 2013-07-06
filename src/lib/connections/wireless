@@ -9,7 +9,7 @@ wireless_up() {
     local config_file
 
     if ! is_interface "$Interface"; then
-        report_error "Interface '$Interface' does not exist"
+        report error "Interface '$Interface' does not exist"
         return 1
     fi
 
@@ -31,7 +31,7 @@ wireless_up() {
     else
         config_file=$(wpa_make_config_file "$Interface")
         if [[ -z $config_file ]]; then
-            report_error "Could not create a wpa config file for interface '$Interface'"
+            report error "Could not create a wpa config file for interface '$Interface'"
             bring_interface_down "$Interface"
             return 1
         fi
@@ -40,7 +40,7 @@ wireless_up() {
 
     # Start the WPA supplicant
     if ! do_debug wpa_start "$Interface" "$WPADriver" "$config_file"; then
-        report_error "The WPA supplicant did not start for interface '$Interface'"
+        report error "The WPA supplicant did not start for interface '$Interface'"
         bring_interface_down "$Interface"
         return 1
     fi
@@ -51,8 +51,8 @@ wireless_up() {
     bring_interface_up "$Interface" || return 1
 
     if ! wpa_wait_until_state "$TimeoutWPA" "$Interface" "COMPLETED"; then
-        report_error "WPA association/authentication failed for interface '$Interface'"
-        report_debug "WPA state for interface '$Interface': $(wpa_get_state "$Interface")"
+        report error "WPA association/authentication failed for interface '$Interface'"
+        report debug "WPA state for interface '$Interface': $(wpa_get_state "$Interface")"
         wpa_stop "$Interface"
         bring_interface_down "$Interface"
         return 1

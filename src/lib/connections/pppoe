@@ -11,11 +11,11 @@ pppoe_up() {
     local cfg
 
     if ! is_interface "$Interface"; then
-        report_error "Interface '$Interface' does not exist"
+        report error "Interface '$Interface' does not exist"
         return 1
     fi
     if ! bring_interface_up "$Interface"; then
-        report_error "Failed to bring interface '$Interface' up"
+        report error "Failed to bring interface '$Interface' up"
         return 1
     fi
 
@@ -57,7 +57,7 @@ pppoe_up() {
     if ! $pppd file "${cfg}"; then
         rm "${cfg}"
         rmdir "$state_dir/pppoe.${Interface}.${Profile}/"
-        report_error "Couldn't make pppd connection."
+        report error "Couldn't make pppd connection."
         return 1
     fi
 }

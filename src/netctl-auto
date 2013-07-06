@@ -32,7 +32,7 @@ case $STARTSTOP in
         exit_error "Could not create the configuration file for interface '$INTERFACE'"
     fi
     list_profiles | while read -r profile; do
-        report_debug "Examining profile '$profile'"
+        report debug "Examining profile '$profile'"
         (
           source "$profile_dir/$profile"
           [[ $Interface == "$INTERFACE" ]] || continue
@@ -43,7 +43,7 @@ case $STARTSTOP in
           [[ $Security == "wpa-config" ]] && exit 1
 
           printf "%s\n" "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$WPA_CONF"
-          report_notice "Included profile '$profile'"
+          report notice "Included profile '$profile'"
         )
     done
 

@@ -6,7 +6,7 @@ declare -ag BindsToInterfaces
 
 tuntap_up() {
     if is_interface "$Interface"; then
-        report_error "Interface '$Interface' already exists"
+        report error "Interface '$Interface' already exists"
         return 1
     else
         ip tuntap add dev "$Interface" mode "$Mode" \

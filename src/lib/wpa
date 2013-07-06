@@ -173,12 +173,12 @@ wpa_make_config_file() {
     local config_file="$state_dir/wpa_supplicant_$1.conf"
 
     if [[ -e $config_file ]]; then
-        report_debug "The anticipated filename '$config_file' is not available"
+        report debug "The anticipated filename '$config_file' is not available"
         return 1
     fi
     mkdir -p "$state_dir" /run/wpa_supplicant
     if ! : > "$config_file"; then
-        report_debug "Could not create the configuration file '$config_file'"
+        report debug "Could not create the configuration file '$config_file'"
         return 1
     fi
     chmod 600 "$config_file"
@@ -217,7 +217,7 @@ wpa_make_config_block() {
         return
       ;;
       *)
-        report_error "Unsupported security setting: '$Security'"
+        report error "Unsupported security setting: '$Security'"
         return 1
       ;;
     esac

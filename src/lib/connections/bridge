@@ -8,7 +8,7 @@ declare -ag BindsToInterfaces
 bridge_up() {
     if is_interface "$Interface"; then
         if [[ ! -d "/sys/class/net/$Interface/brif" ]]; then
-            report_error "Interface '$Interface' already exists and is not a bridge"
+            report error "Interface '$Interface' already exists and is not a bridge"
             return 1
         fi
     else

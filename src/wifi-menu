@@ -145,11 +145,11 @@ connect_to_ssid()
     fi
     clear
     if systemctl is-active --quiet "netctl-auto@$INTERFACE.service"; then
-        report_notice "Interface '$INTERFACE' is controlled by netctl-auto"
+        report notice "Interface '$INTERFACE' is controlled by netctl-auto"
         if (( NEW_PROFILE )); then
             do_debug systemctl restart "netctl-auto@$INTERFACE.service"
         else
-            report_error "A profile already exists for SSID '$1'"
+            report error "A profile already exists for SSID '$1'"
         fi
     elif ! netctl switch-to "$PROFILE"; then
         if (( NEW_PROFILE )); then
@@ -175,14 +175,14 @@ while [[ "$1" = -* ]]; do
             shift
             ;;
         -*)
-            report_error "Invalid option: $1"
+            report error "Invalid option: $1"
             usage
             exit 255
             ;;
     esac
 done
 if [[ $# -gt 1 ]]; then
-    report_error "Too many arguments"
+    report error "Too many arguments"
     usage
     exit 255
 fi
@@ -196,12 +196,12 @@ INTERFACE=$1
 if [[ -z "$INTERFACE" ]]; then
     INTERFACE=(/sys/class/net/*/wireless/)
     if [[ "${#INTERFACE[@]}" -ne 1 || ! -d "$INTERFACE" ]]; then
-        report_error "Invalid interface specification"
+        report error "Invalid interface specification"
         usage
         exit 255
     fi
     INTERFACE=${INTERFACE:15:-10}
-    report_debug "Using interface '$INTERFACE'"
+    report debug "Using interface '$INTERFACE'"
 fi
 
 cd /  # We do not want to spawn anything that can block unmounting
@@ -243,18 +243,18 @@ case $RETURN in
         clear
         ;;
     3)  # No networks found
-        report_error "No networks found"
+        report error "No networks found"
         ;;
     4)  # Invalid passphrase length (WEP keys have tighter restrictions)
         clear
-        report_error "Passphrase must be 8..63 characters"
+        report error "Passphrase must be 8..63 characters"
         ;;
     255)  # ESC or error
         clear
-        report_error "Aborted"
+        report error "Aborted"
         ;;
     *)  # Should not happen
-        report_error "Unexpected return code from dialog: $RETURN"
+        report error "Unexpected return code from dialog: $RETURN"
         RETURN=7
         ;;
 esac

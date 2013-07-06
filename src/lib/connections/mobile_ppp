@@ -60,7 +60,7 @@ EOF
     else
         PinStr="'OK' 'AT'"
     fi
-    report_debug echo $PinStr
+    report debug echo $PinStr
 
     # Mode can be one of 3Gpref, 3Gonly, GPRSpref, GPRSonly, None
     # Only works for Huawei modems
@@ -116,7 +116,7 @@ EOF
 
     if ! $PPPD file "${cfg}"; then
         rmdir "$state_dir/mobile_ppp.${Interface}.${Profile}/"
-        report_error "Couldn't make pppd connection."
+        report error "Couldn't make pppd connection."
         return 1
     fi
 }

@@ -4,11 +4,11 @@
 
 vlan_up() {
     if [[ ${#BindsToInterfaces[@]} -ne 1 ]]; then
-        report_error "No unique physical device for VLAN interface '$Interface' specified"
+        report error "No unique physical device for VLAN interface '$Interface' specified"
         return 1
     fi
     if is_interface "$Interface"; then
-        report_error "Interface '$Interface' already exists"
+        report error "Interface '$Interface' already exists"
         return 1
     else
         bring_interface_up "$BindsToInterfaces"

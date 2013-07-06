@@ -8,22 +8,21 @@ state_file="${netctl_state_file:-/var/lib/netctl/netctl.state}"
 
 ### Logging/Error reporting
 
-report_notice() {
-    printf %s\\n "$@"
-}
-
-report_error() {
-    printf %s\\n "$@"
+report() {
+  type=$1; shift
+  case $type in
+    debug)
+      is_yes "${netctl_debug:-no}" || return
+      set -- DEBUG: "$@"
+    ;;
+    error)
+      set -- ERROR: "$@"
+      exit=1
+    ;;
+  esac
+  printf %s\\n "$@"
+  is_yes "${exit:-0}" && exit 1
 } >&2
-
-report_debug() {
-    is_yes "${netctl_debug:-no}" && echo "DEBUG: $*"
-} >&2
-
-exit_error() {
-    report_error "$@"
-    exit 1
-}
 
 
 ### Variable management
@@ -51,7 +50,7 @@ is_yes() {
         return 1
       ;;
       *)
-        report_error 'Not a valid truth value: "$1"'
+        report error 'Not a valid truth value: "$1"'
         return 2
       ;;
     esac
@@ -62,7 +61,7 @@ is_yes() {
 
 ## Show what we evaluate when debugging, but always evaluate
 do_debug() {
-    report_debug "${FUNCNAME[1]}:" "$@"
+    report debug "${FUNCNAME[1]}:" "$@"
     "$@"
 }
 
@@ -119,4 +118,4 @@ load_profile() {
 }
 
 
-# vim: ft=sh ts=4 et sw=4:
+# vim: ft=sh et sw=2:

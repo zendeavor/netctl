@@ -64,7 +64,7 @@ restore() {
     if [[ ! -r $state_file ]]; then
         exit_error "Could not read state file '$state_file'"
     elif [[ ! -s $state_file ]]; then
-        report_debug "No profiles to restore in state file '$state_file'"
+        report debug "No profiles to restore in state file '$state_file'"
     else
         mapfile -t Profiles < "$state_file"
         do_debug sd_call start "${Profiles[@]}"
@@ -100,7 +100,7 @@ switch_to() {
 unit_enable() {
     local unit="@systemdsystemconfdir@/netctl@$(sd_escape "$1").service"
     if [[ -e $unit ]]; then
-        report_error "A unit file for profile '$1' already exists"
+        report error "A unit file for profile '$1' already exists"
         return 1
     fi
     load_profile "$1"
@@ -131,7 +131,7 @@ unit_disable() {
         sd_call disable "$1"
     fi
     if [[ ! -f $unit ]]; then
-        report_error "No regular unit file found for profile '$1'"
+        report error "No regular unit file found for profile '$1'"
         return 1
     fi
     do_debug rm "$unit"
@@ -143,7 +143,7 @@ case $# in
   1)
     case $1 in
       --version)
-        report_notice "netctl version $netctl_version";;
+        report notice "netctl version $netctl_version";;
       --help)
         usage;;
       list)

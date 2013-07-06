@@ -6,7 +6,7 @@ declare -ag BindsToInterfaces
 
 tunnel_up() {
     if is_interface "$Interface"; then
-        report_error "Interface '$Interface' already exists"
+        report error "Interface '$Interface' already exists"
         return 1
     else
         ip tunnel add "$Interface" mode "$Mode" remote "$Remote"
