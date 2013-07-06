@@ -104,7 +104,7 @@ list_files() {
 load_profile() {
     local hook
     if [[ ! -r $profile_dir/$1 ]]; then
-        report error 'Profile "$1" does not exist or is not readable'
+        report error "Profile $1 does not exist or is not readable"
     fi
     while read -r hook; do
         source "$hook"

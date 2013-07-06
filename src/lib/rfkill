@@ -8,17 +8,17 @@
 get_rf_path() {
     local interface=$1 rfkill_name=${2:-auto} path
 
-    if [[ $rfkill_name == auto ]]; then
+    if [[ $rfkill_name == "auto" ]]; then
         path=$(find -L "/sys/class/net/$interface/" -maxdepth 2 -type d -name "rfkill*" 2> /dev/null | head -n 1)
         if [[ $path ]]; then
-            printf %s\\n "$path"
+            printf "%s\n" "$path"
             return 0
         fi
         report error "No rfkill switch available on interface $interface"
     else
         for path in /sys/class/rfkill/*; do
             if [[ $(< "$path/name") == $rfkill_name ]]; then
-                printf %s\\n "$path"
+                printf "%s\n" "$path"
                 return 0
             fi
         done
@@ -33,7 +33,7 @@ get_rf_path() {
 enable_rf() {
     local interface=$1 rfkill=$2 path hard soft
 
-    path=$(get_rf_path "$interface" "$rfkill") || return 1
+    path="$(get_rf_path $interface $rfkill)" || return 1
     read hard < "$path/hard"
     read soft < "$path/soft"
 
@@ -41,8 +41,8 @@ enable_rf() {
         report error "Transmission is hard-blocked on interface $interface"
         return 1
     else (( soft )); then
-        report debug "$FUNCNAME: echo 0 > $path/soft"
-        echo 0 > "$path/soft"
+        report debug "$FUNCNAME: printf %s\n 0 > $path/soft"
+        printf "%s\n" "0" > "$path/soft"
         timeout_wait 1 [[ ! $(< "$path/soft") ]]
     fi
 }
@@ -54,8 +54,8 @@ disable_rf() {
     local interface=$1 rfkill=$2 path
 
     path=$(get_rf_path "$interface" "$rfkill") || return 1
-    report debug "$FUNCNAME: echo 1 > $path/soft"
-    echo 1 > "$path/soft"
+    report debug "$FUNCNAME: printf %s\n 1 > $path/soft"
+    printf "%s\n" "1" > "$path/soft"
     timeout_wait 1 [[ $(< "$path/soft") ]]
 }
 
