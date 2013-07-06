@@ -3,10 +3,10 @@
 . /usr/lib/network/globals
 . "$subr_dir/ip"
 
-interface="$1"
+interface=$1
 # ssid="$2"
-profile="$3"
-action="$4"
+profile=$3
+action=$4
 
 # Is it possible that we don't get a profile?!
 [[ $profile && load_profile $profile ]] || exit 1
