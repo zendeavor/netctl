@@ -1,24 +1,24 @@
 #! /bin/bash
 
-if (( $# != 2 )) || [[ $1 != @(start|stop) ]]; then
-    exit_error "Usage: netctl-auto [start|stop] <interface>"
+if (( "$#" != 2 )) || [[ $1 != @(start|stop) ]]; then
+   report error "Usage: netctl-auto [start|stop] <interface>"
 fi
 
 . /usr/lib/network/globals
 . "$subr_dir/wpa"
 . "$subr_dir/rfkill"
 
-startstop=$1
-interface=$2
+startstop="$1"
+interface="$2"
 pidfile="$state_dir/wpa_actiond_$interface.pid"
 shift 2
 action_script=$subr_dir/auto.action
 actiond_args=(-p /run/wpa_supplicant -i "$interface" -P "$pidfile" -a "$action_script")
 
-case $startstop in
+case "$startstop" in
   start)
     if wpa_is_active "$interface"; then
-        exit_error "The interface ($interface) is already in use"
+        report error "The interface ($interface) is already in use"
     fi
     if [[ -x $profile_dir/interfaces/$interface ]]; then
         source "$profile_dir/interfaces/$interface"
@@ -28,10 +28,10 @@ case $startstop in
     fi
 
     if ! wpa_conf=$(wpa_make_config_file "$interface"); then
-        exit_error 'Could not create the configuration file for interface "$INTERFACE"'
+        report error "Could not create the configuration file for interface $INTERFACE"
     fi
     list_files "$profile_dir" | while read -r profile; do
-        report_debug 'Examining profile "$profile"'
+        report debug "Examining profile $profile"
         (
           source "$profile_dir/$profile"
           [[ $Interface == "$interface" ]] || continue
@@ -42,7 +42,7 @@ case $startstop in
           [[ $Security == "wpa-config" ]] && exit 1
 
           printf "%s\n" "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$wpa_conf"
-          report_notice "Included profile '$profile'"
+          report notice "Included profile $profile"
         )
     done
 
@@ -55,10 +55,11 @@ case $startstop in
     exit 1
   ;;
   stop)
-    kill "$(< "$pidfile")"
+    kill "$(< $pidfile)"
     if [[ -x $profile_dir/interfaces/$interface ]]; then
         source "$profile_dir/interfaces/$interface"
     fi
+    # TODO: rework timeout_wait.
     timeout_wait 1 '! wpa_is_active "$interface"' || wpa_stop "$interface"
     ip link set dev "$interface" down
     [[ $RFKill ]] && disable_rf "$interface" "$RFKill"
