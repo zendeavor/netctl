@@ -1,5 +1,6 @@
 netctl_version=notpackaged
 profile_dir=/etc/netctl
+
 subr_dir=/usr/lib/network
 conn_dir=$subr_dir/connections
 state_dir=/run/network
@@ -8,23 +9,23 @@ state_file=${netctl_state_file:-/var/lib/netctl/netctl.state}
 
 ### Logging/Error reporting
 
-report_notice() {
-    printf %s\\n "$@"
+report() {
+    type="$1"; shift
+    case "$type" in
+        debug)
+            is_yes "${netctl_debug:-no}" || return
+            set -- DEBUG: "$@"
+            ;;
+        notice)
+            set -- NOTICE: "$@"
+            ;;
+        error)
+            set -- ERROR: "$@"
+            ;;
+        *)
+            ;;
+    esac
 }
-
-report_error() {
-    printf %s\\n "$@"
-} >&2
-
-report_debug() {
-    is_yes "${netctl_debug:-no}" && echo "DEBUG: $*"
-} >&2
-
-exit_error() {
-    report_error "$@"
-    exit 1
-}
-
 
 ### Variable management
 
@@ -43,17 +44,17 @@ in_array() {
 ## Check if a variable denotes a positive truth value
 # $1: the variable to check, use is_yes ${VAR:-yes} to set a default
 is_yes() {
-    case ${1,,} in
-      yes|true|on|1)
-        return 0
-      ;;
-      no|false|off|0)
-        return 1
-      ;;
-      *)
-        report_error 'Not a valid truth value: "$1"'
-        return 2
-      ;;
+    case "${1,,}" in
+        yes|true|on|1)
+            return 0
+            ;;
+        no|false|off|0)
+            return 1
+            ;;
+        *)
+            report error "Not a valid truth value: $1"
+            return 2
+            ;;
     esac
 }
 
@@ -62,16 +63,17 @@ is_yes() {
 
 ## Show what we evaluate when debugging, but always evaluate
 do_debug() {
-    report_debug "${FUNCNAME[1]}:" "$@"
+    report debug "${FUNCNAME[1]}:" "$@"
     "$@"
 }
 
 ## Exit if we are not effectively root
 # $1: program name (optional)
 ensure_root() {
-    (( EUID == 0 )) || exit_error "${1-$0} needs root privileges"
+    (( EUID == 0 )) || report error "${1-$0} needs root privileges"
 }
 
+### TODO: Rework timeout_wait()
 ## Waits until a statement succeeds or a timeout occurs
 # $1: timeout in seconds
 # $2...: condition command
@@ -103,22 +105,31 @@ list_files() {
 load_profile() {
     local hook
     if [[ ! -r $profile_dir/$1 ]]; then
-        exit_error 'Profile "$1" does not exist or is not readable'
+        report error "Profile $1 does not exist or is not readable"
     fi
     while read -r hook; do
         source "$hook"
     done < <(list_files "$profile_dir/hooks" | sort -u)
     source "$profile_dir/$1"
     if [[ -z $Interface ]]; then
-        exit_error 'Profile "$1" does not specify an interface'
+        report error "Profile $1 does not specify an interface"
     fi
     if [[ ! -r ${Connection:+$conn_dir/$connection} ]]; then
-        exit_error 'Profile "$1" does not specify a valid connection'
+        report error "Profile $1 does not specify a valid connection"
     fi
     if [[ -x $profile_dir/interfaces/$interface ]]; then
         source "$profile_dir/interfaces/$interface"
     fi
     source "$conn_dir/$connection"
+}
+
+
+### DHCP Client selection
+
+## Check validity of DHCP Client defined by user
+which_dhcp() {
+    "${DHCPClient[@]}" &>/dev/null || \
+        report error "DHCP Client $DHCPClient[@] not found."
 }
 
 

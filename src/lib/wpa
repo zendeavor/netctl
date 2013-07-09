@@ -37,7 +37,7 @@ wpa_is_active(){
 wpa_get_state() {
     local state
     state=$(wpa_call $1 status | grep -m1 "^wpa_state=") || return 1
-    echo ${state#wpa_state=}
+    printf "%s\n" "${state#wpa_state=}"
 }
 
 ## Waits until the wpa supplicant reaches a listed state
@@ -47,7 +47,7 @@ wpa_get_state() {
 wpa_wait_until_state() {
     local timeout=$1 interface=$2 states=( "${@:3}" )
     timeout_wait "$timeout" \
-                 'in_array "$(wpa_get_state "$interface")" "${states[@]}"'
+                 in_array "$(wpa_get_state "$interface")" "${states[@]}"
 }
 
 ## Waits while the wpa supplicant is in a listed state
@@ -152,7 +152,7 @@ wpa_supplicant_scan() {
         return 1
     fi
 
-    echo "$essids"
+    printf "%s\n" "$essids"
 }
 
 ## Print a string within quotes, unless it starts with the "-modifier
@@ -174,23 +174,23 @@ wpa_make_config_file() {
     local config_file="$state_dir/wpa_supplicant_$1.conf"
 
     if [[ -e $config_file ]]; then
-        report_debug "The anticipated filename '$config_file' is not available"
+        report debug "The anticipated filename $config_file is not available"
         return 1
     fi
     mkdir -p "$state_dir" /run/wpa_supplicant
     if ! : > "$config_file"; then
-        report_debug "Could not create the configuration file '$config_file'"
+        report debug "Could not create the configuration file $config_file"
         return 1
     fi
     chmod 600 "$config_file"
 
-    echo "ctrl_interface=/run/wpa_supplicant" >> "$config_file"
-    echo "ctrl_interface_group=${WPAGroup:-wheel}" >> "$config_file"
-    [[ $Country ]] && echo "country=$Country" >> "$config_file"
+    printf "%s\n" "ctrl_interface=/run/wpa_supplicant" >> "$config_file"
+    printf "%s\n" "ctrl_interface_group=${WPAGroup:-wheel}" >> "$config_file"
+    [[ $Country ]] && printf "%s\n" "country=$Country" >> "$config_file"
     if is_yes "${AdHoc:-no}"; then
-        echo "ap_scan=2" >> "$config_file"
+       printf "%s\n" "ap_scan=2" >> "$config_file"
     fi
-    echo "$config_file"
+    printf "%\n" "$config_file"
 }
 
 ## Generate a network block for wpa_supplicant
@@ -198,19 +198,19 @@ wpa_make_config_file() {
 wpa_make_config_block() {
     case $Security in
       none)
-        echo "key_mgmt=NONE"
+        printf "%s\n" "key_mgmt=NONE"
       ;;
       wep)
-        echo "key_mgmt=NONE"
-        echo "wep_tx_keyidx=0"
-        echo "wep_key0=$(wpa_quote "$Key")"
+        printf "%s\n" "key_mgmt=NONE"
+        printf "%s\n" "wep_tx_keyidx=0"
+        printf "%s\n" "wep_key0=$(wpa_quote "$Key")"
       ;;
       wpa)
-        echo "proto=RSN WPA"
-        if [[ "${#Key}" -eq 64 ]]; then
-            echo "psk=$Key"
+        printf "%s\n" "proto=RSN WPA"
+        if [[ ${#Key} -eq 64 ]]; then
+            printf "%s\n" "psk=$Key"
         else
-            echo "psk=$(wpa_quote "$Key")"
+            printf "%s\n" "psk=$(wpa_quote "$Key")"
         fi
       ;;
       wpa-configsection)
@@ -218,16 +218,16 @@ wpa_make_config_block() {
         return
       ;;
       *)
-        report_error "Unsupported security setting: '$Security'"
+        report error "Unsupported security setting: '$Security'"
         return 1
       ;;
     esac
 
-    echo "ssid=$(wpa_quote "$ESSID")"
-    [[ $AP ]] && echo "bssid=${AP,,}"
-    is_yes "${Hidden:-no}" && echo "scan_ssid=1"
-    is_yes "${AdHoc:-no}" && echo "mode=1"
-    [[ $Priority ]] && echo "priority=$Priority"
+    printf "%s\n" "ssid=$(wpa_quote $ESSID)"
+    [[ $AP ]] && printf "%s\n" "bssid=${AP,,}"
+    is_yes "${Hidden:-no}" && printf "%s\n" "scan_ssid=1"
+    is_yes "${AdHoc:-no}" && printf "%s\m" "mode=1"
+    [[ $Priority ]] && printf "%s\n" "priority=$Priority"
 }
 
 
