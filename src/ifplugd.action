@@ -13,7 +13,7 @@ case "$2" in
     # dhcp can actually outright fail, whereas
     # it's difficult to tell if static succeeded
     # Also check profile is same iface and is right connection
-    printf "%s\n" "up"
+    printf "%s" "up"
     declare -a preferred_profiles
     declare -a dhcp_profiles
     declare -a static_profiles
@@ -53,7 +53,7 @@ case "$2" in
     fi
     ;;
   *)
-    printf "%s\n" "Wrong arguments" >&2
+    printf "%s" "Wrong arguments" >&2
     ;;
 esac
 

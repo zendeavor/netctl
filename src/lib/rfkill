@@ -11,14 +11,14 @@ get_rf_path() {
     if [[ $rfkill_name == "auto" ]]; then
         path=$(find -L "/sys/class/net/$interface/" -maxdepth 2 -type d -name "rfkill*" 2> /dev/null | head -n 1)
         if [[ $path ]]; then
-            printf "%s\n" "$path"
+            printf "%s" "$path"
             return 0
         fi
         report error "No rfkill switch available on interface $interface"
     else
         for path in /sys/class/rfkill/*; do
             if [[ $(< "$path/name") == $rfkill_name ]]; then
-                printf "%s\n" "$path"
+                printf "%s" "$path"
                 return 0
             fi
         done
@@ -42,7 +42,7 @@ enable_rf() {
         return 1
     else (( soft )); then
         report debug "$FUNCNAME: printf %s\n 0 > $path/soft"
-        printf "%s\n" "0" > "$path/soft"
+        printf "%s" "0" > "$path/soft"
         timeout_wait 1 [[ ! $(< "$path/soft") ]]
     fi
 }
@@ -55,7 +55,7 @@ disable_rf() {
 
     path=$(get_rf_path "$interface" "$rfkill") || return 1
     report debug "$FUNCNAME: printf %s\n 1 > $path/soft"
-    printf "%s\n" "1" > "$path/soft"
+    printf "%s" "1" > "$path/soft"
     timeout_wait 1 [[ $(< "$path/soft") ]]
 }
 
