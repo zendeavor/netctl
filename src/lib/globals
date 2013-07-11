@@ -1,9 +1,9 @@
-netctl_version="notpackaged"
-profile_dir="/etc/netctl"
-subr_dir="/usr/lib/network"
-conn_dir="$subr_dir/connections"
-state_dir="/run/network"
-state_file="${netctl_state_file:-/var/lib/netctl/netctl.state}"
+netctl_version=notpackaged
+profile_dir=/etc/netctl
+subr_dir=/usr/lib/network
+conn_dir=$subr_dir/connections
+state_dir=/run/network
+state_file=${netctl_state_file:-/var/lib/netctl/netctl.state}
 
 
 ### Logging/Error reporting
@@ -20,7 +20,7 @@ report() {
       exit=1
     ;;
   esac
-  printf %s\\n "$@"
+  printf '%s\n' "$*"
   is_yes "${exit:-0}" && exit 1
 } >&2
 
@@ -31,29 +31,28 @@ report() {
 # $1: the variable to find
 # $2...: the array elements
 in_array() {
-    local hay needle=$1
-    shift
-    for hay; do
-        [[ $hay == $needle ]] && return 0
-    done
-    return 1
+  local hay needle=$1
+  for hay in "${@:2}"; do
+    [[ $hay == $needle ]] && return 0
+  done
+  return 1
 }
 
 ## Check if a variable denotes a positive truth value
 # $1: the variable to check, use is_yes ${VAR:-yes} to set a default
 is_yes() {
-    case ${1,,} in
-      yes|true|on|1)
-        return 0
-      ;;
-      no|false|off|0)
-        return 1
-      ;;
-      *)
-        report error 'Not a valid truth value: "$1"'
-        return 2
-      ;;
-    esac
+  case ${1,,} in
+    yes|true|on|1)
+      return 0
+    ;;
+    no|false|off|0)
+      return 1
+    ;;
+    *)
+      report error "Not a valid truth value: $1"
+      return 2
+    ;;
+  esac
 }
 
 
@@ -61,27 +60,28 @@ is_yes() {
 
 ## Show what we evaluate when debugging, but always evaluate
 do_debug() {
-    report debug "${FUNCNAME[1]}:" "$@"
-    "$@"
+  report debug "${FUNCNAME[1]}:" "$@"
+  "$@"
 }
 
 ## Exit if we are not effectively root
 # $1: program name (optional)
+# arithmetic context: 0 == truthy
 ensure_root() {
-    (( EUID == 0 )) || exit_error "${1-$0} needs root privileges"
+  (( EUID )) || report error "${1-$0} needs root privileges"
 }
 
 ## Waits until a statement succeeds or a timeout occurs
 # $1: timeout in seconds
 # $2...: condition command
 timeout_wait() {
-    local timeout=$1
-    (( timeout *= 5 ))
-    shift
-    until "$@"; do
-        (( timeout-- > 0 )) || return 1
-        sleep 0.2
-    done
+  local timeout=$1
+  (( timeout *= 5 ))
+  shift
+  until "$@"; do
+    (( timeout-- > 0 )) || return 1
+    sleep 0.2
+  done
 }
 
 
@@ -89,40 +89,44 @@ timeout_wait() {
 
 ## List all acceptable profiles names (assume they don't contain newlines)
 list_files() {
-    # JP: follow aliases with -L, also skip profiles that end with '.conf' (so
-    #     profile.conf can be the wpa.conf file for profile)
-    findopts=(
-              -L "$1" -maxdepth 1 -type f
-              ! -name '.*' 
-              ! -name '*~'
-              ! -name '*.conf'
-              ! -name '*.service'
-              -print0
-              )
-    find "${findopts[@]}"
+  # JP: follow aliases with -L, also skip profiles that end with '.conf' (so
+  #     profile.conf can be the wpa.conf file for profile)
+  findopts=(
+  -L "$1" -maxdepth 1 -type f
+  ! -name '.*'
+  ! -name '*~'
+  ! -name '*.conf'
+  ! -name '*.service'
+  -print0
+  )
+  find "${findopts[@]}"
 }
 
 ## Sources all hooks, a profile and any interface hook
 # $1: profile name
 load_profile() {
-    local hook
-    if [[ ! -r $profile_dir/$1 ]]; then
-        exit_error 'Profile "$1" does not exist or is not readable'
-    fi
-    while read -r hook; do
-        source "$hook"
-    done < <(find -L "$profile_dir/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' | sort -u)
-    source "$profile_dir/$1"
-    if [[ -z $Interface ]]; then
-        exit_error 'Profile "$1" does not specify an interface'
-    fi
-    if [[ ! -r ${Connection:+$conn_dir/$connection} ]]; then
-        exit_error 'Profile "$1" does not specify a valid connection'
-    fi
-    if [[ -x "$profile_dir/interfaces/$interface" ]]; then
-        source "$profile_dir/interfaces/$interface"
-    fi
-    source "$conn_dir/$connection"
+  local hook
+  # TODO: why do we need to check this here?
+  if [[ ! -r $profile_dir/$1 ]]; then
+    report error "Profile $1 does not exist or is not readable"
+  fi
+  # but then we just assume there are hooks to source?
+  while IFS= read -rd '' hook; do
+    source "$hook"
+  done < <(list_files "$profile_dir/hooks")
+  # hooks should override.
+  source "$profile_dir/$1"
+  if [[ -z $Interface ]]; then
+    report error "Profile $1 does not specify an interface"
+  fi
+  if [[ ! -r ${Connection:+$conn_dir/$connection} ]]; then
+    report error "Profile $1 does not specify a valid connection"
+  fi
+  # doesn't matter if +x; these aren't executable anyway
+  if [[ -x $profile_dir/interfaces/$interface ]]; then
+    source "$profile_dir/interfaces/$interface"
+  fi
+  source "$conn_dir/$connection"
 }
 
 

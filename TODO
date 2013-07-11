@@ -1,0 +1,10 @@
+BUGS
+wpa_passphrase cannot generate a psk for WEP-40 or WEP-104
+wifi-menu generated a profile named 'wlan0-VZGY5' -- systemctl failed enabling
+	systemctl says "Profile for wlan0x2VZYG5 does not exist or is not readable"
+	suspect: sd_escape() in file src/netctl.in
+passphrases with quote characters don't appear to work
+	suspect: passing the key around in a variable probably obliterates the
+	quotemarks unless the character is excessively escaped
+	especially evident in non-wpa networks
+	solution: try to re-encode the Key to hex manually for non-wpa networks?
