@@ -41,18 +41,7 @@ in_array() {
 ## Check if a variable denotes a positive truth value
 # $1: the variable to check, use is_yes ${VAR:-yes} to set a default
 is_yes() {
-  case ${1,,} in
-    yes|true|on|1)
-      return 0
-    ;;
-    no|false|off|0)
-      return 1
-    ;;
-    *)
-      report error "Not a valid truth value: $1"
-      return 2
-    ;;
-  esac
+  [[ ${1,,} == @(yes|true|on|1) ]]
 }
 
 
@@ -66,22 +55,19 @@ do_debug() {
 
 ## Exit if we are not effectively root
 # $1: program name (optional)
-# arithmetic context: 0 == truthy
+# arithmetic context: 0 == falsey
 ensure_root() {
-  (( EUID )) || report error "${1-$0} needs root privileges"
+  (( ! EUID )) || report error "${1-$0} needs root privileges"
 }
 
-## Waits until a statement succeeds or a timeout occurs
-# $1: timeout in seconds
-# $2...: condition command
-timeout_wait() {
-  local timeout=$1
-  (( timeout *= 5 ))
-  shift
-  until "$@"; do
-    (( timeout-- > 0 )) || return 1
-    sleep 0.2
-  done
+## Attempts a command until success or iterations == 0
+# $1: number of iterations
+# ${@:2}: command to attempt
+try() {
+  local iters=$1; shift
+  if (( iters-- )) && ! "$@"; then
+    try $iters "$@"
+  fi
 }
 
 
@@ -89,8 +75,6 @@ timeout_wait() {
 
 ## List all acceptable profiles names (assume they don't contain newlines)
 list_files() {
-  # JP: follow aliases with -L, also skip profiles that end with '.conf' (so
-  #     profile.conf can be the wpa.conf file for profile)
   findopts=(
   -L "$1" -maxdepth 1 -type f
   ! -name '.*'
@@ -114,7 +98,6 @@ load_profile() {
   while IFS= read -rd '' hook; do
     source "$hook"
   done < <(list_files "$profile_dir/hooks")
-  # hooks should override.
   source "$profile_dir/$1"
   if [[ -z $Interface ]]; then
     report error "Profile $1 does not specify an interface"
@@ -122,7 +105,7 @@ load_profile() {
   if [[ ! -r ${Connection:+$conn_dir/$connection} ]]; then
     report error "Profile $1 does not specify a valid connection"
   fi
-  # doesn't matter if +x; these aren't executable anyway
+  # doesn't matter if +x; these aren't executable with no shebang.
   if [[ -x $profile_dir/interfaces/$interface ]]; then
     source "$profile_dir/interfaces/$interface"
   fi
