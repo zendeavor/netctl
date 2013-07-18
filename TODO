@@ -8,3 +8,13 @@ passphrases with quote characters don't appear to work
 	quotemarks unless the character is excessively escaped
 	especially evident in non-wpa networks
 	solution: try to re-encode the Key to hex manually for non-wpa networks?
+
+
+MISC
+clean up variables, and pass them explicitly
+	variables are just assumed on a whim
+	often, they are not even defined in the same file in which they are used
+	naming convention sucks by default
+		practice is internally inconsistent with defined style
+
+
