@@ -1,23 +1,6 @@
-Dependencies:
-- systemd
-- Bash 4.x
-- GNU Coreutils
-- iproute2
-- resolvconf
+PROJECT IS OBSOLETE
+Now consists of devising a proposal to ArchLinux Developers requesting the
+removal of netctl from its official repositories and deprecating it as an
+officially supported and developed project.
 
-Optional:
-- dhcpcd or dhclient: for DHCP support
-- wpa_supplicant: for WPA support
-- dialog: for the interactive assistant
-- ifplugd: for automatic connection
-- wpa_actiond: for automatic connection
-- ifenslave: for bonding support
-- bridge-utils: for bridge support
-
-For documentation generation:
-- asciidoc
-
-Naming Conventions for Variables:
-end-user variables - CamelCase
-local variables    - lower_case
-other variables    - UPPER_CASE
+This will not be a scratchpad for working out that proposal.
